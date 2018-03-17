@@ -56,35 +56,27 @@ def iniciar_procura():
     return rodar_programa, date, dateWSJ
 
 
+#Pegando as informacoes 
 
-#pegando do Twitter
+#Twitter
 
 def get_twitter(pagina):
     lista = []
     lista_final = []
     for status in tweepy.Cursor(api.user_timeline, screen_name = pagina).items(200):
         lista.append(f"{status._json['text']} | https://twitter.com/i/web/status/{status._json['id_str']}")
-    compara = ["Wall Street Journal", "Financial Times", "WST", "London"]
+    compara = ["London", "UK"]
     
     for selecionado in lista:
         if "front page" in selecionado:
-            if "London edition"in selecionado:
+            if "Just published"in selecionado:
                 for bb in compara:
                     if bb in selecionado:
                         lista_final.append(selecionado)
     return lista_final
 
 
-
-#criar uma forma de buscar o do NY times também 
-
-
-def arruma_manchete(manchete):
-    manchete_list = manchete
-    if isinstance(manchete, str):
-        manchete_list = [manchete]
-    return manchete_list
-
+#NYT
 
 def pega_manchete_ny(dia_pegar):
     #puxar da funcao do tempo
@@ -95,18 +87,20 @@ def pega_manchete_ny(dia_pegar):
     bsOb = bs(ny_times.content, "html5lib")
 
     try:
-        manchete = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).h1.text.strip()
+        manchete = bsOb.find("ol", {"class":"story-menu"}).li.article.div.h2.text.strip()
     except AttributeError:
         pass
         manchete = []
     try: 
-        desc = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).p.text.strip()
+        desc = bsOb.find("ol", {"class":"story-menu"}).li.article.div.p.text.strip()
     except AttributeError:
         pass
         desc = []
         
     return manchete, desc
 
+
+#WSJ
 
 def pega_manchete_WSJ(dia_pegar):
     from bs4 import BeautifulSoup as bs
@@ -126,6 +120,16 @@ def pega_manchete_WSJ(dia_pegar):
         desc = []
 
     return manchete, desc
+
+
+#Transformando o que retorna do WSJ e NY de string para lista. Assim consigo jogar para o Airtable
+
+def arruma_manchete(manchete):
+    manchete_list = manchete
+    if isinstance(manchete, str):
+        manchete_list = [manchete]
+    return manchete_list
+
 
 
 #importar a base com os links 
@@ -252,8 +256,7 @@ def main():
         manchete = arruma_manchete(manchete)
         novidade = manchetes_novas(base_WSJ, manchete, "WSJ")
         enviar_email(novidade, "WSJ", desc)
-
-
+        
 
 if __name__ == '__main__':
     main()
