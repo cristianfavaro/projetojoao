@@ -44,7 +44,7 @@ def iniciar_procura():
     rodar_programa = False
     hora_agora = Time.now(False)
     hora_inicial = Time(0, 5, 0)
-    hora_final = Time(6, 20, 0)
+    hora_final = Time(23, 45, 0)
 
     if hora_inicial < hora_agora < hora_final:
         rodar_programa = True
