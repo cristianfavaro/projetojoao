@@ -208,14 +208,10 @@ def enviar_email(novidade, jornal, desc = None):
     if novidade == []:
         pass
     else:
-        from pendulum import Time
-        from pendulum import Date
-
-        hora_agora = Time.now(False)
         subject = f'Manchete do {jornal} disponivel para o NewsPaper'
         msg = 'Subject:{}\n\nSegue manchete:\n\n\n'.format(subject)
         
-        msg+= f"{novidade}\n\n{desc}\n\n\n\n{hora_agora}"
+        msg+= f"{novidade}\n\n{desc}\n\n"
 
         gmail_sender = 'cfc.jornalista@gmail.com'
 
