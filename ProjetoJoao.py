@@ -43,8 +43,8 @@ def iniciar_procura():
 
     rodar_programa = False
     hora_agora = Time.now(False)
-    hora_inicial = Time(0, 5, 0)
-    hora_final = Time(23, 45, 0)
+    hora_inicial = Time(0, 30, 0)
+    hora_final = Time(6, 20, 0)
 
     if hora_inicial < hora_agora < hora_final:
         rodar_programa = True
@@ -94,8 +94,16 @@ def pega_manchete_ny(dia_pegar):
     ny_times = requests.get(f"https://www.nytimes.com/issue/todayspaper/{dia_pegar}/todays-new-york-times")
     bsOb = bs(ny_times.content, "html5lib")
 
-    manchete = bsOb.find("ol", {"class":"story-menu"}).li.article.div.h2.text.strip()
-    desc = bsOb.find("ol", {"class":"story-menu"}).li.article.div.p.text.strip()
+    try:
+        manchete = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).h1.text.strip()
+    except AttributeError:
+        pass
+        manchete = []
+    try: 
+        desc = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).p.text.strip()
+    except AttributeError:
+        pass
+        desc = []
         
     return manchete, desc
 
@@ -106,9 +114,16 @@ def pega_manchete_WSJ(dia_pegar):
 
     WSJ = requests.get(f"http://www.wsj.com/itp/{dia_pegar}/us")
     bsOb = bs(WSJ.content, "html5lib")
-
-    manchete = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).h1.text.strip()
-    desc = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).p.text.strip()
+    try:
+        manchete = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).h1.text.strip()
+    except AttributeError:
+        pass
+        manchete = []
+    try:    
+        desc = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).p.text.strip()
+    except AttributeError:
+        pass
+        desc = []
 
     return manchete, desc
 
