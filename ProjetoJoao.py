@@ -3,7 +3,6 @@
 
 import tweepy
 import requests
-import smtplib
 
 
 #Arquivos com senhas 
@@ -54,6 +53,8 @@ def iniciar_procura():
     dateWSJ = str(date_b).replace("-", "")
     #Lembrar de definir o que você quer? [0] para rodar e [1] para o dia do mês
     return rodar_programa, date, dateWSJ
+
+
 
 
 #Pegando as informacoes 
@@ -121,6 +122,25 @@ def pega_manchete_WSJ(dia_pegar):
 
     return manchete, desc
 
+#ElPais
+
+def pega_manchete_ElPais(dia_pegar):
+    from bs4 import BeautifulSoup as bs
+    import requests
+    link_elpais = f"https://elpais.com/hemeroteca/elpais/portadas/{dia_pegar}/"
+    elpais = requests.get(link_elpais)
+    bsOb = bs(elpais.content, "html5lib")
+    Data = bsOb.find("div", {"class":"archivo_portadas"}).findAll("div")[1].p.text
+    arquivo_El = []
+
+    if Data == 'No hay portadas de EL PAÍS para esa fecha':
+        arquivo_El = []
+    else: 
+        arquivo_El.append(link_elpais)
+    return arquivo_El
+
+
+
 
 #Transformando o que retorna do WSJ e NY de string para lista. Assim consigo jogar para o Airtable
 
@@ -143,6 +163,7 @@ def csv_import(base_k, table_n):
     base_twitter = []
     base_ny = []
     base_WSJ = []
+    base_ElPais = []
     for v in records:
         try:
             base_twitter.append(v['fields']['publicacao'])
@@ -156,9 +177,13 @@ def csv_import(base_k, table_n):
             base_WSJ.append(v['fields']['WSJ'])
         except KeyError:
             pass
+        try:
+            base_ElPais.append(v['fields']['ElPais'])
+        except KeyError:
+            pass
     #lembrar de jogar o resultado da fun em duas var. (base_twitter, base_ny = )
 
-    return base_twitter, base_ny, base_WSJ
+    return base_twitter, base_ny, base_WSJ, base_ElPais
 
 
 #adicionar linha ao Airtable - Terei de ter um para a publicacao e um para NY
@@ -181,6 +206,11 @@ def adicionar_linha_WSJ(novos_dados):
     new_content = {"fields": {"WSJ": novos_dados}}
     s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
 
+def adicionar_linha_ElPais(novos_dados):
+    airtable_destino_api_url = airtable_fonte_api_url
+    headers = {"Authorization": f'Bearer {airtable_api}'}
+    new_content = {"fields": {"ElPais": novos_dados}}
+    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
 
 
 #comparar se é novo ou não
@@ -199,6 +229,8 @@ def manchetes_novas(base_airtable, lista_final, destino):
                 adicionar_linha_NY(item)
             if destino == "twitter":
                 adicionar_linha_twitter(item)
+            if destino == "ElPais":
+                adicionar_linha_ElPais(item)
             base_airtable = csv_import(base_k, table_n)[0]
                 
     return novidade
@@ -208,7 +240,8 @@ def manchetes_novas(base_airtable, lista_final, destino):
 
 # PRECISO FAZER UMA FORMA DELE BUSCAR TUDO E DEPOIS MANDAR UM E-MAIL SÓ' atualizar o código
 
-def enviar_email(novidade, jornal, desc = None):
+def enviar_email(novidade, jornal, desc = ""):
+    import smtplib
     if novidade == []:
         pass
     else:
@@ -257,6 +290,11 @@ def main():
         novidade = manchetes_novas(base_WSJ, manchete, "WSJ")
         enviar_email(novidade, "WSJ", desc)
         
+        #ElPais
+        arquivo_El = pega_manchete_ElPais(iniciar_procura()[1])
+        base_ElPais = csv_import(base_k, table_n)[3]
+        novidade = manchetes_novas(base_ElPais, arquivo_El, "ElPais")
+        enviar_email(novidade, "El Pais")
 
 if __name__ == '__main__':
     main()
