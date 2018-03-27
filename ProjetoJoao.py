@@ -136,9 +136,8 @@ def pega_manchete_ElPais(dia_pegar):
     if Data == 'No hay portadas de EL PAÍS para esa fecha':
         arquivo_El = []
     else: 
-        arquivo_El.append(link_elpais)
+        arquivo_El.append(f"Jornal do dia {dia_pegar} liberado | https://elpais.com/hemeroteca/elpais/portadas/{dia_pegar}")
     return arquivo_El
-
 
 
 
