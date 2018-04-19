@@ -59,6 +59,68 @@ def iniciar_procura():
 
 #Pegando as informacoes 
 
+
+#Zero Hora
+
+def get_zero_hora():
+    from bs4 import BeautifulSoup as bs
+    import requests
+
+    zero_hora = requests.get("https://gauchazh.clicrbs.com.br")
+    bsOb = bs(zero_hora.content, "html5lib")
+    data = bsOb.find("div", {"class":"latest-edition is-out-pad"}).a.img.get("alt")
+    link = bsOb.find("div", {"class":"latest-edition is-out-pad"}).a.img.get("src").replace("//", "https://")
+    return f"{data} | {link}"
+
+
+# Jornal do Comércio 
+
+def get_jornal_do_comercio(data):
+    data = data.replace("/", ",")
+    from bs4 import BeautifulSoup as bs
+    import requests
+
+    jc = requests.get(f"http://jconlineinteratividade.ne10.uol.com.br/capa-do-dia/{data},0,1,index.html")
+    bsOb = bs(jc.content, "html5lib")
+    try:
+        if bsOb.find("div", {"class":"imagem bordaimg imagemcapa"}).h3.text.strip() == 'Capa não encontrada.':
+            link = []
+            return link
+    except AttributeError:
+        link = bsOb.find("div", {"class":"imagem bordaimg imagemcapa"}).a.img.get("src")
+        return f'{data.replace(",", "/")} | {link}'
+
+
+# A Tarde
+
+def get_a_tarde():
+    from bs4 import BeautifulSoup as bs
+    import requests
+
+    a_tarde = requests.get("http://edicaodigital.atarde.uol.com.br")
+    bsOb = bs(a_tarde.content, "html5lib")
+    Data = bsOb.find("section", {"class":"capa"}).find("img").get("alt")
+    link = bsOb.find("section", {"class":"capa"}).find("img").get("src")
+    return f"{Data} | {link}"
+
+
+
+
+# Diário Catarinense
+
+
+def get_DC(data):
+    from bs4 import BeautifulSoup as bs
+    import requests
+
+    diario_catarinense = requests.get("http://dc.clicrbs.com.br/sc/")
+    bsOb = bs(diario_catarinense.content, "html5lib")
+
+    link_capa = bsOb.find("div", {"class":"article article-printed"}).find("img").get("src")
+    return f"{data} | {link_capa}"
+
+
+
 #Twitter
 
 def get_twitter(pagina):
@@ -163,6 +225,10 @@ def csv_import(base_k, table_n):
     base_ny = []
     base_WSJ = []
     base_ElPais = []
+    base_ZH = []
+    base_JC = []
+    base_ATarde = []
+    base_DC = []
     for v in records:
         try:
             base_twitter.append(v['fields']['publicacao'])
@@ -180,9 +246,28 @@ def csv_import(base_k, table_n):
             base_ElPais.append(v['fields']['ElPais'])
         except KeyError:
             pass
+        try:
+            base_ZH.append(v['fields']['ZH'])
+        except KeyError:
+            pass
+        try:
+            base_JC.append(v['fields']['JC'])
+        except KeyError:
+            pass
+        try:
+            base_ATarde.append(v['fields']['ATarde'])
+        except KeyError:
+            pass
+        try:
+            base_DC.append(v['fields']['DC'])
+        except KeyError:
+            pass
+
+
     #lembrar de jogar o resultado da fun em duas var. (base_twitter, base_ny = )
 
-    return base_twitter, base_ny, base_WSJ, base_ElPais
+    return base_twitter, base_ny, base_WSJ, base_ElPais, base_ZH, base_JC, base_ATarde, base_DC
+
 
 
 #adicionar linha ao Airtable - Terei de ter um para a publicacao e um para NY
@@ -211,6 +296,31 @@ def adicionar_linha_ElPais(novos_dados):
     new_content = {"fields": {"ElPais": novos_dados}}
     s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
 
+def adicionar_linha_ZH(novos_dados):
+    airtable_destino_api_url = airtable_fonte_api_url
+    headers = {"Authorization": f'Bearer {airtable_api}'}
+    new_content = {"fields": {"ZH": novos_dados}}
+    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
+
+def adicionar_linha_JC(novos_dados):
+    airtable_destino_api_url = airtable_fonte_api_url
+    headers = {"Authorization": f'Bearer {airtable_api}'}
+    new_content = {"fields": {"JC": novos_dados}}
+    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
+
+def adicionar_linha_ATarde(novos_dados):
+    airtable_destino_api_url = airtable_fonte_api_url
+    headers = {"Authorization": f'Bearer {airtable_api}'}
+    new_content = {"fields": {"ATarde": novos_dados}}
+    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
+
+def adicionar_linha_DC(novos_dados):
+    airtable_destino_api_url = airtable_fonte_api_url
+    headers = {"Authorization": f'Bearer {airtable_api}'}
+    new_content = {"fields": {"DC": novos_dados}}
+    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
+
+
 
 #comparar se é novo ou não
 
@@ -230,8 +340,16 @@ def manchetes_novas(base_airtable, lista_final, destino):
                 adicionar_linha_twitter(item)
             if destino == "ElPais":
                 adicionar_linha_ElPais(item)
+            if destino == "ZH":
+                adicionar_linha_ZH(item)
+            if destino == "JC":
+                adicionar_linha_JC(item)
+            if destino == "ATarde":
+                adicionar_linha_ATarde(item)
+            if destino == "DC":
+                adicionar_linha_DC(item)
             base_airtable = csv_import(base_k, table_n)[0]
-                
+
     return novidade
 
 
@@ -239,27 +357,36 @@ def manchetes_novas(base_airtable, lista_final, destino):
 
 # PRECISO FAZER UMA FORMA DELE BUSCAR TUDO E DEPOIS MANDAR UM E-MAIL SÓ' atualizar o código
 
-def enviar_email(novidade, jornal, desc = ""):
+def enviar_email(mensagem_email, assunto):
     import smtplib
-    if novidade == []:
-        pass
-    else:
-        subject = f'Manchete do {jornal} disponivel para o NewsPaper'
-        msg = 'Subject:{}\n\nSegue manchete:\n\n\n'.format(subject)
-        
-        msg+= f"{novidade}\n\n{desc}\n\n"
 
-        gmail_sender = 'cfc.jornalista@gmail.com'
+    pega_assunto = ""
 
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.login(gmail_acc, gmail_pass)
+    for jornal in range(len(assunto)):
+        if jornal == 0:
+            pega_assunto += assunto[jornal]
+        elif 0 < jornal < len(assunto)-1:
+            pega_assunto += f", {assunto[jornal]}"
+        elif jornal == len(assunto)-1:
+            pega_assunto += f" e {assunto[jornal]}"
 
-        para = os.environ.get('DESTINO_EMAIL')
 
-        corpo = msg.encode('utf8')
-        server.sendmail(gmail_sender, para.split(","), corpo)
+    subject = f'Manchetes NewsPaper: {pega_assunto}'
+    msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
+    
+    msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo"
 
-        server.quit()
+    gmail_sender = 'cfc.jornalista@gmail.com'
+
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server.login(gmail_acc, gmail_pass)
+
+    para = os.environ.get('DESTINO_EMAIL')
+
+    corpo = msg.encode('utf8')
+    server.sendmail(gmail_sender, para.split(","), corpo)
+
+    server.quit()
 
 
 
@@ -267,33 +394,103 @@ def main():
     rodar_programa = iniciar_procura()[0]
     if rodar_programa == True:
         
+        assunto = []
+        Manchetes_email = ""
+        
         #FT
         lista_final = get_twitter("FinancialTimes")
         base_twitter = csv_import(base_k, table_n)[0]
         novidade = manchetes_novas(base_twitter, lista_final, "twitter")
-        enviar_email(novidade, "Financial Times")
+        if novidade == []:
+            pass
+        else: 
+            Manchetes_email += f"-- Manchete do Financial Times:\n\n{novidade[0]}\n\n\n"
+            assunto.append("Financial Times")
         
         #NYT
-        
         manchete, desc = pega_manchete_ny(iniciar_procura()[1])
         base_ny = csv_import(base_k, table_n)[1]
         manchete = arruma_manchete(manchete)
         novidade = manchetes_novas(base_ny, manchete, "NY")
-        enviar_email(novidade, "NYT", desc)
-        
+        if novidade == []:
+            pass
+        else: 
+            Manchetes_email += f"-- Manchete do NYT:\n\n{novidade[0]}\n\n{desc}\n\n\n"
+            assunto.append("NYT")
+
         #WSJ
-        
         manchete, desc = pega_manchete_WSJ(iniciar_procura()[2])
         base_WSJ = csv_import(base_k, table_n)[2]
         manchete = arruma_manchete(manchete)
         novidade = manchetes_novas(base_WSJ, manchete, "WSJ")
-        enviar_email(novidade, "WSJ", desc)
+        if novidade == []:
+            pass
+        else: 
+            Manchetes_email += f"-- Manchete do WSJ:\n\n{novidade[0]}\n\n{desc}\n\n\n"
+            assunto.append("WSJ")
+
         
         #ElPais
         arquivo_El = pega_manchete_ElPais(iniciar_procura()[1])
         base_ElPais = csv_import(base_k, table_n)[3]
         novidade = manchetes_novas(base_ElPais, arquivo_El, "ElPais")
-        enviar_email(novidade, "El Pais")
+        if novidade == []:
+            pass
+        else: 
+            Manchetes_email += f"-- Manchete do El Pais:\n\n{novidade[0]}\n\n\n"
+            assunto.append("El Pais")
+
+
+        #Zero Hora
+        manchete = get_zero_hora()
+        base_ZH = csv_import(base_k, table_n)[4]
+        manchete = arruma_manchete(manchete)
+        novidade = manchetes_novas(base_ZH, manchete, "ZH")
+        if novidade == []:
+            pass
+        else: 
+            Manchetes_email += f"-- Manchete do ZH:\n\n{novidade[0]}\n\n\n"
+            assunto.append("ZH")
+
+        # Jornal do Comércio 
+        manchete = get_jornal_do_comercio(iniciar_procura()[1])
+        base_JC = csv_import(base_k, table_n)[5]
+        manchete = arruma_manchete(manchete)
+        novidade = manchetes_novas(base_JC, manchete, "JC")
+        if novidade == []:
+            pass
+        else: 
+            Manchetes_email += f"-- Manchete do JC:\n\n{novidade[0]}\n\n\n"
+            assunto.append("JC")
+
+
+        # A Tarde
+        manchete = get_a_tarde()
+        base_ATarde = csv_import(base_k, table_n)[6]
+        manchete = arruma_manchete(manchete)
+        novidade = manchetes_novas(base_ATarde, manchete, "ATarde")
+        if novidade == []:
+            pass
+        else: 
+            Manchetes_email += f"-- Manchete do A Tarde:\n\n{novidade[0]}\n\n\n"
+            assunto.append("A Tarde")
+
+        # Diário Catarinense
+        manchete = get_DC(iniciar_procura()[1])
+        base_DC = csv_import(base_k, table_n)[7]
+        manchete = arruma_manchete(manchete)
+        novidade = manchetes_novas(base_DC, manchete, "DC")
+        if novidade == []:
+            pass
+        else: 
+            Manchetes_email += f"-- Manchete do DC:\n\n{novidade[0]}\n\n\n"
+            assunto.append("DC")
+
+
+        if Manchetes_email != [] and assunto != []:
+            enviar_email(Manchetes_email, assunto)
+        else: 
+            pass
 
 if __name__ == '__main__':
     main()
