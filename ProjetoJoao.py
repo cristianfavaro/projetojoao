@@ -116,8 +116,14 @@ def get_DC():
     diario_catarinense = requests.get("http://dc.clicrbs.com.br/sc/")
     bsOb = bs(diario_catarinense.content, "html5lib")
 
-    link_capa = bsOb.find("div", {"class":"article article-printed"}).find("img").get("src")
+    try:
+        link_capa = bsOb.find("div", {"class":"article article-printed"}).find("img").get("src")
+    except AttributeError:
+        pass
+        link_capa = []
     return link_capa
+
+
 
 
 
@@ -476,7 +482,7 @@ def main():
             assunto.append("A Tarde")
 
         # Diário Catarinense
-        manchete = get_DC(iniciar_procura()[1])
+        manchete = get_DC()
         base_DC = csv_import(base_k, table_n)[7]
         manchete = arruma_manchete(manchete)
         novidade = manchetes_novas(base_DC, manchete, "DC")
