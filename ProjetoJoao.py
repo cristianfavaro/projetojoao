@@ -42,7 +42,7 @@ def iniciar_procura():
 
     rodar_programa = False
     hora_agora = Time.now(False)
-    hora_inicial = Time(0, 30, 0)
+    hora_inicial = Time(3, 30, 0)
     hora_final = Time(6, 20, 0)
 
     if hora_inicial < hora_agora < hora_final:
@@ -109,7 +109,7 @@ def get_a_tarde():
 # Diário Catarinense
 
 
-def get_DC(data):
+def get_DC():
     from bs4 import BeautifulSoup as bs
     import requests
 
@@ -117,7 +117,7 @@ def get_DC(data):
     bsOb = bs(diario_catarinense.content, "html5lib")
 
     link_capa = bsOb.find("div", {"class":"article article-printed"}).find("img").get("src")
-    return f"{data} | {link_capa}"
+    return link_capa
 
 
 
