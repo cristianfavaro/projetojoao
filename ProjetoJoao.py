@@ -11,13 +11,18 @@ import os
 from dotenv import find_dotenv, load_dotenv
 load_dotenv(find_dotenv())
 
-airtable_api = os.environ.get('AIRTABLE_KEY')
-gmail_acc = os.environ.get('G-MAIL_ACC')
-gmail_pass = os.environ.get('G-MAIL_KEY')
 
-airtable_fonte_api_url = os.environ.get('AIR_FONTE_URL')
+#Airtable keys
+
+airtable_api = os.environ.get('AIRTABLE_KEY')
 base_k = os.environ.get('BASE')
-table_n = "Table 1"
+
+
+#MailGun keys
+
+mailgun_acc = os.environ.get('MAILGUN_ACC')
+mailgun_pass = os.environ.get('MAILGUN_KEY')
+
 
 #Twitter
 
@@ -56,7 +61,6 @@ def iniciar_procura():
 
 
 
-
 #Pegando as informacoes 
 
 
@@ -68,7 +72,10 @@ def get_zero_hora():
 
     zero_hora = requests.get("https://gauchazh.clicrbs.com.br")
     bsOb = bs(zero_hora.content, "html5lib")
-    data = bsOb.find("div", {"class":"latest-edition is-out-pad"}).a.img.get("alt")
+    try:
+        data = bsOb.find("div", {"class":"latest-edition is-out-pad"}).a.img.get("alt")
+    except AttributeError:
+        pass
     link = bsOb.find("div", {"class":"latest-edition is-out-pad"}).a.img.get("src").replace("//", "https://")
     return f"{data} | {link}"
 
@@ -105,9 +112,7 @@ def get_a_tarde():
 
 
 
-
 # Diário Catarinense
-
 
 def get_DC():
     from bs4 import BeautifulSoup as bs
@@ -125,8 +130,6 @@ def get_DC():
 
 
 
-
-
 #Twitter
 
 def get_twitter(pagina):
@@ -138,11 +141,11 @@ def get_twitter(pagina):
     
     for selecionado in lista:
         if "front page" in selecionado:
-            if "Just published"in selecionado:
                 for bb in compara:
                     if bb in selecionado:
                         lista_final.append(selecionado)
     return lista_final
+
 
 
 #NYT
@@ -190,6 +193,7 @@ def pega_manchete_WSJ(dia_pegar):
 
     return manchete, desc
 
+
 #ElPais
 
 def pega_manchete_ElPais(dia_pegar):
@@ -219,143 +223,43 @@ def arruma_manchete(manchete):
 
 
 
-#importar a base com os links 
+#Pegando a base do airtable
 
-def csv_import(base_k, table_n):
+def base_airtable_import(base_k, table_n):
     from airtable import Airtable
-    base_key = base_k
-    table_name = table_n
-    airtable = Airtable(base_key, table_name, api_key=airtable_api)
+    airtable = Airtable(base_k, table_n, api_key=airtable_api)
     records = airtable.get_all()
-    base_twitter = []
-    base_ny = []
-    base_WSJ = []
-    base_ElPais = []
-    base_ZH = []
-    base_JC = []
-    base_ATarde = []
-    base_DC = []
+    table = []
     for v in records:
         try:
-            base_twitter.append(v['fields']['publicacao'])
+            table.append(v['fields']['Name'])
         except KeyError:
             pass
-        try:
-            base_ny.append(v['fields']['NY'])
-        except KeyError:
-            pass
-        try:
-            base_WSJ.append(v['fields']['WSJ'])
-        except KeyError:
-            pass
-        try:
-            base_ElPais.append(v['fields']['ElPais'])
-        except KeyError:
-            pass
-        try:
-            base_ZH.append(v['fields']['ZH'])
-        except KeyError:
-            pass
-        try:
-            base_JC.append(v['fields']['JC'])
-        except KeyError:
-            pass
-        try:
-            base_ATarde.append(v['fields']['ATarde'])
-        except KeyError:
-            pass
-        try:
-            base_DC.append(v['fields']['DC'])
-        except KeyError:
-            pass
-
-
-    #lembrar de jogar o resultado da fun em duas var. (base_twitter, base_ny = )
-
-    return base_twitter, base_ny, base_WSJ, base_ElPais, base_ZH, base_JC, base_ATarde, base_DC
+    return table
 
 
 
-#adicionar linha ao Airtable - Terei de ter um para a publicacao e um para NY
+#adicionar linha ao Airtable
 
-def adicionar_linha_twitter(novos_dados):
-    airtable_destino_api_url = airtable_fonte_api_url
-    headers = {"Authorization": f'Bearer {airtable_api}'}
-    new_content = {"fields": {"publicacao": novos_dados}}
-    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
-
-def adicionar_linha_NY(novos_dados):
-    airtable_destino_api_url = airtable_fonte_api_url
-    headers = {"Authorization": f'Bearer {airtable_api}'}
-    new_content = {"fields": {"NY": novos_dados}}
-    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
-
-def adicionar_linha_WSJ(novos_dados):
-    airtable_destino_api_url = airtable_fonte_api_url
-    headers = {"Authorization": f'Bearer {airtable_api}'}
-    new_content = {"fields": {"WSJ": novos_dados}}
-    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
-
-def adicionar_linha_ElPais(novos_dados):
-    airtable_destino_api_url = airtable_fonte_api_url
-    headers = {"Authorization": f'Bearer {airtable_api}'}
-    new_content = {"fields": {"ElPais": novos_dados}}
-    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
-
-def adicionar_linha_ZH(novos_dados):
-    airtable_destino_api_url = airtable_fonte_api_url
-    headers = {"Authorization": f'Bearer {airtable_api}'}
-    new_content = {"fields": {"ZH": novos_dados}}
-    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
-
-def adicionar_linha_JC(novos_dados):
-    airtable_destino_api_url = airtable_fonte_api_url
-    headers = {"Authorization": f'Bearer {airtable_api}'}
-    new_content = {"fields": {"JC": novos_dados}}
-    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
-
-def adicionar_linha_ATarde(novos_dados):
-    airtable_destino_api_url = airtable_fonte_api_url
-    headers = {"Authorization": f'Bearer {airtable_api}'}
-    new_content = {"fields": {"ATarde": novos_dados}}
-    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
-
-def adicionar_linha_DC(novos_dados):
-    airtable_destino_api_url = airtable_fonte_api_url
-    headers = {"Authorization": f'Bearer {airtable_api}'}
-    new_content = {"fields": {"DC": novos_dados}}
-    s = requests.post(airtable_destino_api_url, json=new_content, headers=headers)
+def base_airtable_inserir(base_k, table_n, novos_dados):
+    from airtable import Airtable
+    airtable = Airtable(base_k, table_n, api_key=airtable_api)
+    data = {'Name': novos_dados}
+    airtable.insert(data)
 
 
 
-#comparar se é novo ou não
+#comparar se é novo ou não e inserir na tabela
 
 def manchetes_novas(base_airtable, lista_final, destino):
-    #Lembrando que a lista_compara agora é lista_final e a base_relatorio agora é base ny ou twitter
     novidade = []
     for item in lista_final:
         if item in base_airtable:
             pass
-        else:
+        else: 
             novidade.append(item)
-            if destino == "WSJ":
-                adicionar_linha_WSJ(item)
-            if destino == "NY":
-                adicionar_linha_NY(item)
-            if destino == "twitter":
-                adicionar_linha_twitter(item)
-            if destino == "ElPais":
-                adicionar_linha_ElPais(item)
-            if destino == "ZH":
-                adicionar_linha_ZH(item)
-            if destino == "JC":
-                adicionar_linha_JC(item)
-            if destino == "ATarde":
-                adicionar_linha_ATarde(item)
-            if destino == "DC":
-                adicionar_linha_DC(item)
-            base_airtable = csv_import(base_k, table_n)[0]
-
+            base_airtable_inserir(base_k, destino, item)
+            base_airtable = base_airtable_import(base_k, destino)
     return novidade
 
 
@@ -365,6 +269,7 @@ def manchetes_novas(base_airtable, lista_final, destino):
 
 def enviar_email(mensagem_email, assunto):
     import smtplib
+
 
     pega_assunto = ""
 
@@ -380,24 +285,25 @@ def enviar_email(mensagem_email, assunto):
     subject = f'Manchetes NewsPaper: {pega_assunto}'
     msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
     
-    msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo"
+    msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo\n\n"
 
-    gmail_sender = 'cfc.jornalista@gmail.com'
+    mailgun_sender = 'noreply@cristianfavaro.com.br'
 
-    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-    server.login(gmail_acc, gmail_pass)
+    server = smtplib.SMTP_SSL('smtp.mailgun.org', 465)
+    server.login(mailgun_acc, mailgun_pass)
 
     para = os.environ.get('DESTINO_EMAIL')
 
     corpo = msg.encode('utf8')
-    server.sendmail(gmail_sender, para.split(","), corpo)
+    server.sendmail(mailgun_sender, para.split(","), corpo)
 
     server.quit()
 
 
 
 def main():
-    rodar_programa = iniciar_procura()[0]
+    rodar_programa = True
+    #rodar_programa = iniciar_procura()[0]
     if rodar_programa == True:
         
         assunto = []
@@ -405,8 +311,8 @@ def main():
         
         #FT
         lista_final = get_twitter("FinancialTimes")
-        base_twitter = csv_import(base_k, table_n)[0]
-        novidade = manchetes_novas(base_twitter, lista_final, "twitter")
+        base_twitter = base_airtable_import(base_k, "FT")
+        novidade = manchetes_novas(base_twitter, lista_final, "FT")
         if novidade == []:
             pass
         else: 
@@ -415,9 +321,9 @@ def main():
         
         #NYT
         manchete, desc = pega_manchete_ny(iniciar_procura()[1])
-        base_ny = csv_import(base_k, table_n)[1]
+        base_ny = base_airtable_import(base_k, "NYT")
         manchete = arruma_manchete(manchete)
-        novidade = manchetes_novas(base_ny, manchete, "NY")
+        novidade = manchetes_novas(base_ny, manchete, "NYT")
         if novidade == []:
             pass
         else: 
@@ -426,7 +332,7 @@ def main():
 
         #WSJ
         manchete, desc = pega_manchete_WSJ(iniciar_procura()[2])
-        base_WSJ = csv_import(base_k, table_n)[2]
+        base_WSJ = base_airtable_import(base_k, "WSJ")
         manchete = arruma_manchete(manchete)
         novidade = manchetes_novas(base_WSJ, manchete, "WSJ")
         if novidade == []:
@@ -438,7 +344,7 @@ def main():
         
         #ElPais
         arquivo_El = pega_manchete_ElPais(iniciar_procura()[1])
-        base_ElPais = csv_import(base_k, table_n)[3]
+        base_ElPais = base_airtable_import(base_k, "ElPais")
         novidade = manchetes_novas(base_ElPais, arquivo_El, "ElPais")
         if novidade == []:
             pass
@@ -449,7 +355,7 @@ def main():
 
         #Zero Hora
         manchete = get_zero_hora()
-        base_ZH = csv_import(base_k, table_n)[4]
+        base_ZH = base_airtable_import(base_k, "ZH")
         manchete = arruma_manchete(manchete)
         novidade = manchetes_novas(base_ZH, manchete, "ZH")
         if novidade == []:
@@ -458,9 +364,10 @@ def main():
             Manchetes_email += f"-- Manchete do ZH:\n\n{novidade[0]}\n\n\n"
             assunto.append("ZH")
 
+                                           
         # Jornal do Comércio 
         manchete = get_jornal_do_comercio(iniciar_procura()[1])
-        base_JC = csv_import(base_k, table_n)[5]
+        base_JC = base_airtable_import(base_k, "JC")
         manchete = arruma_manchete(manchete)
         novidade = manchetes_novas(base_JC, manchete, "JC")
         if novidade == []:
@@ -472,7 +379,7 @@ def main():
 
         # A Tarde
         manchete = get_a_tarde()
-        base_ATarde = csv_import(base_k, table_n)[6]
+        base_ATarde = base_airtable_import(base_k, "ATarde")
         manchete = arruma_manchete(manchete)
         novidade = manchetes_novas(base_ATarde, manchete, "ATarde")
         if novidade == []:
@@ -483,7 +390,7 @@ def main():
 
         # Diário Catarinense
         manchete = get_DC()
-        base_DC = csv_import(base_k, table_n)[7]
+        base_DC = base_airtable_import(base_k, "DC")
         manchete = arruma_manchete(manchete)
         novidade = manchetes_novas(base_DC, manchete, "DC")
         if novidade == []:
@@ -497,6 +404,7 @@ def main():
             enviar_email(Manchetes_email, assunto)
         else: 
             pass
+
 
 if __name__ == '__main__':
     main()
