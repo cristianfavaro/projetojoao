@@ -302,8 +302,7 @@ def enviar_email(mensagem_email, assunto):
 
 
 def main():
-    rodar_programa = True
-    #rodar_programa = iniciar_procura()[0]
+    rodar_programa = iniciar_procura()[0]
     if rodar_programa == True:
         
         assunto = []
