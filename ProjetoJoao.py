@@ -303,10 +303,17 @@ def enviar_email(mensagem_email, assunto):
 
 def main():
 
+    #Busca Casa Branca
     import projeto_inter
     projeto_inter.run_projeto_inter()
 
     rodar_programa = iniciar_procura()[0]
+
+    #Busca BC
+    import Projeto_BC
+
+    Projeto_BC.main()
+
     
     if rodar_programa == True:
         
