@@ -76,7 +76,10 @@ def get_zero_hora():
         data = bsOb.find("div", {"class":"latest-edition is-out-pad"}).a.img.get("alt")
     except AttributeError:
         pass
-    link = bsOb.find("div", {"class":"latest-edition is-out-pad"}).a.img.get("src").replace("//", "https://")
+    try:
+        link = bsOb.find("div", {"class":"latest-edition is-out-pad"}).a.img.get("src").replace("//", "https://")
+    except AttributeError:
+        pass
     return f"{data} | {link}"
 
 
@@ -194,6 +197,30 @@ def pega_manchete_WSJ(dia_pegar):
     return manchete, desc
 
 
+#Lemonde
+
+
+def get_Lemonde(data):
+    url = f"https://www.lemonde.fr/journalelectronique/donnees/libre/{data}/index.html"
+    lemonde = requests.get(url)
+    if lemonde.status_code == 404:
+        return []
+    elif lemonde.status_code == 200:
+        return url, data
+
+
+#Sueddeutsche
+
+def get_Sueddeutsche(data):
+    data = data.replace("/", "-")
+    url = f"https://zeitung.sueddeutsche.de/szdigital/public/issues/list?from={data}&productId=sz&to={data}"
+    Sueddeutsche = requests.get(url).json()
+    if Sueddeutsche['issuesForProductsMap'] == {}:
+        return []
+    else:
+        return url, data
+
+
 #ElPais
 
 def pega_manchete_ElPais(dia_pegar):
@@ -304,6 +331,8 @@ def enviar_email(mensagem_email, assunto):
 def main():
 
     rodar_programa = iniciar_procura()[0]
+
+    rodar_programa = True
     
     if rodar_programa == True:
         
@@ -399,6 +428,32 @@ def main():
         else: 
             Manchetes_email += f"-- Manchete do DC:\n\n{novidade[0]}\n\n\n"
             assunto.append("DC")
+
+
+        #Lemonde
+        manchete = get_Lemonde(iniciar_procura()[2])
+        base_Lemonde = base_airtable_import(base_k, "Lemonde")
+        mancheteLink = arruma_manchete(manchete[0])
+        mancheteData = arruma_manchete(manchete[1])
+        novidade = manchetes_novas(base_Lemonde, mancheteData, "Lemonde")
+
+        if novidade == []:
+            pass
+        else:
+            Manchetes_email += f"-- Manchete do Lemonde:\n\n{mancheteLink[0]}\n\n\n"
+            assunto.append("Lemonde")
+
+        #Sueddeutsche
+        manchete = get_Sueddeutsche(iniciar_procura()[1])
+        base_Sueddeutsche = base_airtable_import(base_k, "Sueddeutsche")
+        mancheteLink = arruma_manchete(manchete[0])
+        mancheteData = arruma_manchete(manchete[1])
+        novidade = manchetes_novas(base_Sueddeutsche, mancheteData, "Sueddeutsche")
+        if novidade == []:
+            pass
+        else:
+            Manchetes_email += f"-- Manchete do Sueddeutsche:\n\n{mancheteLink[0]}\n\n\n"
+            assunto.append("Sueddeutsche")
 
 
         if Manchetes_email != [] and assunto != []:
