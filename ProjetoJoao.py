@@ -1,6 +1,5 @@
 ##APP Joao
 
-
 import tweepy
 import requests
 
@@ -197,7 +196,7 @@ def pega_manchete_WSJ(dia_pegar):
     return manchete, desc
 
 
-#Lemonde
+#Le Monde
 
 
 def get_Lemonde(data):
@@ -295,37 +294,41 @@ def manchetes_novas(base_airtable, lista_final, destino):
 # PRECISO FAZER UMA FORMA DELE BUSCAR TUDO E DEPOIS MANDAR UM E-MAIL SÓ' atualizar o código
 
 def enviar_email(mensagem_email, assunto):
-    import smtplib
+    import pendulum
+    data = pendulum.today()
+
+    if 0 < data.day_of_week < 6:
+        import smtplib
+
+        pega_assunto = ""
+
+        for jornal in range(len(assunto)):
+            if jornal == 0:
+                pega_assunto += assunto[jornal]
+            elif 0 < jornal < len(assunto)-1:
+                pega_assunto += f", {assunto[jornal]}"
+            elif jornal == len(assunto)-1:
+                pega_assunto += f" e {assunto[jornal]}"
 
 
-    pega_assunto = ""
+        subject = f'Manchetes NewsPaper: {pega_assunto}'
+        msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
+        
+        msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo\n\n"
 
-    for jornal in range(len(assunto)):
-        if jornal == 0:
-            pega_assunto += assunto[jornal]
-        elif 0 < jornal < len(assunto)-1:
-            pega_assunto += f", {assunto[jornal]}"
-        elif jornal == len(assunto)-1:
-            pega_assunto += f" e {assunto[jornal]}"
+        mailgun_sender = 'noreply@cristianfavaro.com.br'
 
+        server = smtplib.SMTP_SSL('smtp.mailgun.org', 465)
+        server.login(mailgun_acc, mailgun_pass)
 
-    subject = f'Manchetes NewsPaper: {pega_assunto}'
-    msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
-    
-    msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo\n\n"
+        para = os.environ.get('DESTINO_EMAIL')
 
-    mailgun_sender = 'noreply@cristianfavaro.com.br'
+        corpo = msg.encode('utf8')
+        server.sendmail(mailgun_sender, para.split(","), corpo)
 
-    server = smtplib.SMTP_SSL('smtp.mailgun.org', 465)
-    server.login(mailgun_acc, mailgun_pass)
-
-    para = os.environ.get('DESTINO_EMAIL')
-
-    corpo = msg.encode('utf8')
-    server.sendmail(mailgun_sender, para.split(","), corpo)
-
-    server.quit()
-
+        server.quit()
+    else:
+        pass
 
 
 def main():
@@ -428,7 +431,7 @@ def main():
             assunto.append("DC")
 
 
-        #Lemonde
+        #Le Monde
         manchete = get_Lemonde(iniciar_procura()[2])
         base_Lemonde = base_airtable_import(base_k, "Lemonde")
         mancheteLink = arruma_manchete(manchete[0])
@@ -438,8 +441,8 @@ def main():
         if novidade == []:
             pass
         else:
-            Manchetes_email += f"-- Manchete do Lemonde:\n\n{mancheteLink[0]}\n\n\n"
-            assunto.append("Lemonde")
+            Manchetes_email += f"-- Manchete do Le Monde:\n\n{mancheteLink[0]}\n\n\n"
+            assunto.append("Le Monde")
 
         #Sueddeutsche
         manchete = get_Sueddeutsche(iniciar_procura()[1])
@@ -450,9 +453,9 @@ def main():
         if novidade == []:
             pass
         else:
-            Manchetes_email += f"-- Manchete do Sueddeutsche:\n\n{mancheteLink[0]}\n\n\n"
+            pagina_site = f"https://zeitung.sueddeutsche.de/webapp/access/sz/{mancheteData[0]}"
+            Manchetes_email += f"-- Manchete do Sueddeutsche:\n\n{pagina_site}\n\n\n"
             assunto.append("Sueddeutsche")
-
 
         if Manchetes_email != [] and assunto != []:
             enviar_email(Manchetes_email, assunto)
