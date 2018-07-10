@@ -295,9 +295,9 @@ def manchetes_novas(base_airtable, lista_final, destino):
 
 def enviar_email(mensagem_email, assunto):
     import pendulum
-    data = pendulum.today()
+    data = pendulum.now('America/Sao_Paulo')
 
-    if 0 < data.day_of_week < 6:
+    if data.day_of_week < 6:
         import smtplib
 
         pega_assunto = ""
