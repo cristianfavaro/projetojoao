@@ -294,41 +294,36 @@ def manchetes_novas(base_airtable, lista_final, destino):
 # PRECISO FAZER UMA FORMA DELE BUSCAR TUDO E DEPOIS MANDAR UM E-MAIL SÓ' atualizar o código
 
 def enviar_email(mensagem_email, assunto):
-    import pendulum
-    data = pendulum.now('America/Sao_Paulo')
 
-    if data.day_of_week < 6:
-        import smtplib
+    import smtplib
 
-        pega_assunto = ""
+    pega_assunto = ""
 
-        for jornal in range(len(assunto)):
-            if jornal == 0:
-                pega_assunto += assunto[jornal]
-            elif 0 < jornal < len(assunto)-1:
-                pega_assunto += f", {assunto[jornal]}"
-            elif jornal == len(assunto)-1:
-                pega_assunto += f" e {assunto[jornal]}"
+    for jornal in range(len(assunto)):
+        if jornal == 0:
+            pega_assunto += assunto[jornal]
+        elif 0 < jornal < len(assunto)-1:
+            pega_assunto += f", {assunto[jornal]}"
+        elif jornal == len(assunto)-1:
+            pega_assunto += f" e {assunto[jornal]}"
 
 
-        subject = f'Manchetes NewsPaper: {pega_assunto}'
-        msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
-        
-        msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo\n\n"
+    subject = f'Manchetes NewsPaper: {pega_assunto}'
+    msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
+    
+    msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo\n\n"
 
-        mailgun_sender = 'noreply@cristianfavaro.com.br'
+    mailgun_sender = 'noreply@cristianfavaro.com.br'
 
-        server = smtplib.SMTP_SSL('smtp.mailgun.org', 465)
-        server.login(mailgun_acc, mailgun_pass)
+    server = smtplib.SMTP_SSL('smtp.mailgun.org', 465)
+    server.login(mailgun_acc, mailgun_pass)
 
-        para = os.environ.get('DESTINO_EMAIL')
+    para = os.environ.get('DESTINO_EMAIL')
 
-        corpo = msg.encode('utf8')
-        server.sendmail(mailgun_sender, para.split(","), corpo)
+    corpo = msg.encode('utf8')
+    server.sendmail(mailgun_sender, para.split(","), corpo)
 
-        server.quit()
-    else:
-        pass
+    server.quit()
 
 
 def main():
