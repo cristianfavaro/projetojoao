@@ -4,7 +4,7 @@ import tweepy
 import requests
 
 
-#Arquivos com senhas 
+#Arquivos com senhas
 
 import os
 from dotenv import find_dotenv, load_dotenv
@@ -51,7 +51,7 @@ def iniciar_procura():
 
     if hora_inicial < hora_agora < hora_final:
         rodar_programa = True
-    
+
     date_b = Date.today()
     date = str(date_b).replace("-", "/")
     dateWSJ = str(date_b).replace("-", "")
@@ -60,7 +60,7 @@ def iniciar_procura():
 
 
 
-#Pegando as informacoes 
+#Pegando as informacoes
 
 
 #Zero Hora
@@ -82,7 +82,7 @@ def get_zero_hora():
     return f"{data} | {link}"
 
 
-# Jornal do Comércio 
+# Jornal do Comércio
 
 def get_jornal_do_comercio(data):
     data = data.replace("/", ",")
@@ -140,7 +140,7 @@ def get_twitter(pagina):
     for status in tweepy.Cursor(api.user_timeline, screen_name = pagina).items(200):
         lista.append(f"{status._json['text']} | https://twitter.com/i/web/status/{status._json['id_str']}")
     compara = ["London", "UK"]
-    
+
     for selecionado in lista:
         if "front page" in selecionado:
                 for bb in compara:
@@ -165,12 +165,12 @@ def pega_manchete_ny(dia_pegar):
     except AttributeError:
         pass
         manchete = []
-    try: 
+    try:
         desc = bsOb.find("ol", {"class":"story-menu"}).li.article.div.p.text.strip()
     except AttributeError:
         pass
         desc = []
-        
+
     return manchete, desc
 
 
@@ -187,7 +187,7 @@ def pega_manchete_WSJ(dia_pegar):
     except AttributeError:
         pass
         manchete = []
-    try:    
+    try:
         desc = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).p.text.strip()
     except AttributeError:
         pass
@@ -233,7 +233,7 @@ def pega_manchete_ElPais(dia_pegar):
 
     if Data == 'No hay portadas de EL PAÍS para esa fecha':
         arquivo_El = []
-    else: 
+    else:
         arquivo_El.append(f"Jornal do dia {dia_pegar} liberado | https://elpais.com/hemeroteca/elpais/portadas/{dia_pegar}")
     return arquivo_El
 
@@ -282,7 +282,7 @@ def manchetes_novas(base_airtable, lista_final, destino):
     for item in lista_final:
         if item in base_airtable:
             pass
-        else: 
+        else:
             novidade.append(item)
             base_airtable_inserir(base_k, destino, item)
             base_airtable = base_airtable_import(base_k, destino)
@@ -310,7 +310,7 @@ def enviar_email(mensagem_email, assunto):
 
     subject = f'Manchetes NewsPaper: {pega_assunto}'
     msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
-    
+
     msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo\n\n"
 
     mailgun_sender = 'noreply@cristianfavaro.com.br'
@@ -329,22 +329,23 @@ def enviar_email(mensagem_email, assunto):
 def main():
 
     rodar_programa = iniciar_procura()[0]
-    
+    rodar_programa = True
     if rodar_programa == True:
-        
+
         assunto = []
         Manchetes_email = ""
-        
+
         #FT
+        """
         lista_final = get_twitter("FinancialTimes")
         base_twitter = base_airtable_import(base_k, "FT")
         novidade = manchetes_novas(base_twitter, lista_final, "FT")
         if novidade == []:
             pass
-        else: 
+        else:
             Manchetes_email += f"-- Manchete do Financial Times:\n\n{novidade[0]}\n\n\n"
-            assunto.append("Financial Times")
-        
+            assunto.append("Financial Times")"""
+
         #NYT
         manchete, desc = pega_manchete_ny(iniciar_procura()[1])
         base_ny = base_airtable_import(base_k, "NYT")
@@ -352,7 +353,7 @@ def main():
         novidade = manchetes_novas(base_ny, manchete, "NYT")
         if novidade == []:
             pass
-        else: 
+        else:
             Manchetes_email += f"-- Manchete do NYT:\n\n{novidade[0]}\n\n{desc}\n\n\n"
             assunto.append("NYT")
 
@@ -363,18 +364,18 @@ def main():
         novidade = manchetes_novas(base_WSJ, manchete, "WSJ")
         if novidade == []:
             pass
-        else: 
+        else:
             Manchetes_email += f"-- Manchete do WSJ:\n\n{novidade[0]}\n\n{desc}\n\n\n"
             assunto.append("WSJ")
 
-        
+
         #ElPais
         arquivo_El = pega_manchete_ElPais(iniciar_procura()[1])
         base_ElPais = base_airtable_import(base_k, "ElPais")
         novidade = manchetes_novas(base_ElPais, arquivo_El, "ElPais")
         if novidade == []:
             pass
-        else: 
+        else:
             Manchetes_email += f"-- Manchete do El Pais:\n\n{novidade[0]}\n\n\n"
             assunto.append("El Pais")
 
@@ -386,19 +387,19 @@ def main():
         novidade = manchetes_novas(base_ZH, manchete, "ZH")
         if novidade == []:
             pass
-        else: 
+        else:
             Manchetes_email += f"-- Manchete do ZH:\n\n{novidade[0]}\n\n\n"
             assunto.append("ZH")
 
-                                           
-        # Jornal do Comércio 
+
+        # Jornal do Comércio
         manchete = get_jornal_do_comercio(iniciar_procura()[1])
         base_JC = base_airtable_import(base_k, "JC")
         manchete = arruma_manchete(manchete)
         novidade = manchetes_novas(base_JC, manchete, "JC")
         if novidade == []:
             pass
-        else: 
+        else:
             Manchetes_email += f"-- Manchete do JC:\n\n{novidade[0]}\n\n\n"
             assunto.append("JC")
 
@@ -410,7 +411,7 @@ def main():
         novidade = manchetes_novas(base_ATarde, manchete, "ATarde")
         if novidade == []:
             pass
-        else: 
+        else:
             Manchetes_email += f"-- Manchete do A Tarde:\n\n{novidade[0]}\n\n\n"
             assunto.append("A Tarde")
 
@@ -421,7 +422,7 @@ def main():
         novidade = manchetes_novas(base_DC, manchete, "DC")
         if novidade == []:
             pass
-        else: 
+        else:
             Manchetes_email += f"-- Manchete do DC:\n\n{novidade[0]}\n\n\n"
             assunto.append("DC")
 
@@ -454,7 +455,7 @@ def main():
 
         if Manchetes_email != [] and assunto != []:
             enviar_email(Manchetes_email, assunto)
-        else: 
+        else:
             pass
 
 
