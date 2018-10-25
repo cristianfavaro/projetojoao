@@ -294,49 +294,53 @@ def manchetes_novas(base_airtable, lista_final, destino):
 # PRECISO FAZER UMA FORMA DELE BUSCAR TUDO E DEPOIS MANDAR UM E-MAIL SÓ' atualizar o código
 
 def enviar_email(mensagem_email, assunto):
+    import pendulum
+    data = pendulum.today()
 
-    import smtplib
+    if 0 < data.day_of_week < 6:
+        import smtplib
 
-    pega_assunto = ""
+        pega_assunto = ""
 
-    for jornal in range(len(assunto)):
-        if jornal == 0:
-            pega_assunto += assunto[jornal]
-        elif 0 < jornal < len(assunto)-1:
-            pega_assunto += f", {assunto[jornal]}"
-        elif jornal == len(assunto)-1:
-            pega_assunto += f" e {assunto[jornal]}"
+        for jornal in range(len(assunto)):
+            if jornal == 0:
+                pega_assunto += assunto[jornal]
+            elif 0 < jornal < len(assunto)-1:
+                pega_assunto += f", {assunto[jornal]}"
+            elif jornal == len(assunto)-1:
+                pega_assunto += f" e {assunto[jornal]}"
 
 
-    subject = f'Manchetes NewsPaper: {pega_assunto}'
-    msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
+        subject = f'Manchetes NewsPaper: {pega_assunto}'
+        msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
 
-    msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo\n\n"
+        msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo\n\n"
 
-    mailgun_sender = 'noreply@cristianfavaro.com.br'
+        mailgun_sender = 'noreply@cristianfavaro.com.br'
 
-    server = smtplib.SMTP_SSL('smtp.mailgun.org', 465)
-    server.login(mailgun_acc, mailgun_pass)
+        server = smtplib.SMTP_SSL('smtp.mailgun.org', 465)
+        server.login(mailgun_acc, mailgun_pass)
 
-    para = os.environ.get('DESTINO_EMAIL')
+        para = os.environ.get('DESTINO_EMAIL')
 
-    corpo = msg.encode('utf8')
-    server.sendmail(mailgun_sender, para.split(","), corpo)
+        corpo = msg.encode('utf8')
+        server.sendmail(mailgun_sender, para.split(","), corpo)
 
-    server.quit()
+        server.quit()
+    else:
+        pass
 
 
 def main():
 
     rodar_programa = iniciar_procura()[0]
-    rodar_programa = True
+
     if rodar_programa == True:
 
         assunto = []
         Manchetes_email = ""
 
         #FT
-        """
         lista_final = get_twitter("FinancialTimes")
         base_twitter = base_airtable_import(base_k, "FT")
         novidade = manchetes_novas(base_twitter, lista_final, "FT")
@@ -344,7 +348,7 @@ def main():
             pass
         else:
             Manchetes_email += f"-- Manchete do Financial Times:\n\n{novidade[0]}\n\n\n"
-            assunto.append("Financial Times")"""
+            assunto.append("Financial Times")
 
         #NYT
         manchete, desc = pega_manchete_ny(iniciar_procura()[1])
@@ -378,19 +382,6 @@ def main():
         else:
             Manchetes_email += f"-- Manchete do El Pais:\n\n{novidade[0]}\n\n\n"
             assunto.append("El Pais")
-
-
-        #Zero Hora
-        manchete = get_zero_hora()
-        base_ZH = base_airtable_import(base_k, "ZH")
-        manchete = arruma_manchete(manchete)
-        novidade = manchetes_novas(base_ZH, manchete, "ZH")
-        if novidade == []:
-            pass
-        else:
-            Manchetes_email += f"-- Manchete do ZH:\n\n{novidade[0]}\n\n\n"
-            assunto.append("ZH")
-
 
         # Jornal do Comércio
         manchete = get_jornal_do_comercio(iniciar_procura()[1])
