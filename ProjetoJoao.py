@@ -124,7 +124,7 @@ def get_DC():
     bsOb = bs(diario_catarinense.content, "html5lib")
 
     try:
-        link_capa = bsOb.find("div", {"class":"article article-printed"}).find("img").get("src")
+        link_capa = bsOb.find("div", {"class":"sc-htpNat Column FNnSZ"}).find('img').get('src')
     except AttributeError:
         pass
         link_capa = []
@@ -158,16 +158,16 @@ def pega_manchete_ny(dia_pegar):
     import requests
 
     ny_times = requests.get(f"https://www.nytimes.com/issue/todayspaper/{dia_pegar}/todays-new-york-times")
-    bsOb = bs(ny_times.content, "html5lib")
+    bsOb = bs(ny_times.content, "lxml")
 
     try:
-        manchete = bsOb.find("ol", {"class":"story-menu"}).li.article.div.h2.text.strip()
-    except AttributeError:
+        manchete = bsOb.find("ol", {"class":"css-1i4ie59 ekkqrpp2"}).li.div.h2.text.strip()
+    except:
         pass
         manchete = []
     try:
-        desc = bsOb.find("ol", {"class":"story-menu"}).li.article.div.p.text.strip()
-    except AttributeError:
+        desc = bsOb.find("ol", {"class":"css-1i4ie59 ekkqrpp2"}).li.div.p.text.strip()
+    except:
         pass
         desc = []
 
@@ -180,16 +180,16 @@ def pega_manchete_WSJ(dia_pegar):
     from bs4 import BeautifulSoup as bs
     import requests
 
-    WSJ = requests.get(f"http://www.wsj.com/itp/{dia_pegar}/us")
-    bsOb = bs(WSJ.content, "html5lib")
+    WSJ = requests.get(f"http://www.wsj.com/itp/{dia_pegar}/frontpage")
+    bsOb = bs(WSJ.content, "lxml")
     try:
-        manchete = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).h1.text.strip()
-    except AttributeError:
+        manchete = bsOb.find("div", {"class":"headlineSummary topStory LS-imageFormat-D leadStory-itp"}).find('h1').text.strip()
+    except:
         pass
         manchete = []
     try:
-        desc = bsOb.find("div", {"class":"contentwide nonSub"}).div.find("div", {"class":"newsContainer"}).p.text.strip()
-    except AttributeError:
+        desc = bsOb.find("div", {"class":"headlineSummary topStory LS-imageFormat-D leadStory-itp"}).find('p').text.strip()
+    except:
         pass
         desc = []
 
@@ -297,38 +297,35 @@ def enviar_email(mensagem_email, assunto):
     import pendulum
     data = pendulum.today()
 
-    if 0 < data.day_of_week < 6:
-        import smtplib
+    import smtplib
 
-        pega_assunto = ""
+    pega_assunto = ""
 
-        for jornal in range(len(assunto)):
-            if jornal == 0:
-                pega_assunto += assunto[jornal]
-            elif 0 < jornal < len(assunto)-1:
-                pega_assunto += f", {assunto[jornal]}"
-            elif jornal == len(assunto)-1:
-                pega_assunto += f" e {assunto[jornal]}"
+    for jornal in range(len(assunto)):
+        if jornal == 0:
+            pega_assunto += assunto[jornal]
+        elif 0 < jornal < len(assunto)-1:
+            pega_assunto += f", {assunto[jornal]}"
+        elif jornal == len(assunto)-1:
+            pega_assunto += f" e {assunto[jornal]}"
 
 
-        subject = f'Manchetes NewsPaper: {pega_assunto}'
-        msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
+    subject = f'Manchetes NewsPaper: {pega_assunto}'
+    msg = 'Subject:{}\n\nSeguem manchetes:\n\n\n'.format(subject)
 
-        msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo\n\n"
+    msg+= f"{mensagem_email}\n\n\n\n\nProjeto João\nAgência Estado / O Estado de S.Paulo\n\n"
 
-        mailgun_sender = 'noreply@cristianfavaro.com.br'
+    mailgun_sender = 'noreply@cristianfavaro.com.br'
 
-        server = smtplib.SMTP_SSL('smtp.mailgun.org', 465)
-        server.login(mailgun_acc, mailgun_pass)
+    server = smtplib.SMTP_SSL('smtp.mailgun.org', 465)
+    server.login(mailgun_acc, mailgun_pass)
 
-        para = os.environ.get('DESTINO_EMAIL')
+    para = os.environ.get('DESTINO_EMAIL')
 
-        corpo = msg.encode('utf8')
-        server.sendmail(mailgun_sender, para.split(","), corpo)
+    corpo = msg.encode('utf8')
+    server.sendmail(mailgun_sender, para.split(","), corpo)
 
-        server.quit()
-    else:
-        pass
+    server.quit()
 
 
 def main():
