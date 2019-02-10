@@ -47,7 +47,7 @@ def iniciar_procura():
     rodar_programa = False
     hora_agora = Time.now(False)
     hora_inicial = Time(3, 30, 0)
-    hora_final = Time(6, 20, 0)
+    hora_final = Time(7, 20, 0)
 
     if hora_inicial < hora_agora < hora_final:
         rodar_programa = True
@@ -121,7 +121,7 @@ def get_DC():
     import requests
 
     diario_catarinense = requests.get("http://dc.clicrbs.com.br/sc/")
-    bsOb = bs(diario_catarinense.content, "html5lib")
+    bsOb = bs(diario_catarinense.content, "lxml")
 
     try:
         link_capa = bsOb.find("div", {"class":"sc-htpNat Column FNnSZ"}).find('img').get('src')
@@ -217,6 +217,7 @@ def get_Sueddeutsche(data):
     if Sueddeutsche['issuesForProductsMap'] == {}:
         return []
     else:
+        url = f'https://zeitung.sueddeutsche.de/szdigital/public/issue/previewimage?size=l&issueId={data}&targetVersion=6&productId=sz'
         return url, data
 
 
@@ -431,20 +432,27 @@ def main():
         #Sueddeutsche
         manchete = get_Sueddeutsche(iniciar_procura()[1])
         base_Sueddeutsche = base_airtable_import(base_k, "Sueddeutsche")
-        mancheteLink = arruma_manchete(manchete[0])
-        mancheteData = arruma_manchete(manchete[1])
-        novidade = manchetes_novas(base_Sueddeutsche, mancheteData, "Sueddeutsche")
-        if novidade == []:
+        try:
+            mancheteLink = arruma_manchete(manchete[0])
+
+            mancheteData = arruma_manchete(manchete[1])
+            novidade = manchetes_novas(base_Sueddeutsche, mancheteData, "Sueddeutsche")
+            if novidade == []:
+                pass
+            else:
+                pagina_site = f"https://zeitung.sueddeutsche.de/webapp/access/sz/{mancheteData[0]}"
+                Manchetes_email += f"-- Manchete do Sueddeutsche:\n\n{pagina_site}\n\n\n"
+                assunto.append("Sueddeutsche")
+
+
+        except IndexError:
             pass
-        else:
-            pagina_site = f"https://zeitung.sueddeutsche.de/webapp/access/sz/{mancheteData[0]}"
-            Manchetes_email += f"-- Manchete do Sueddeutsche:\n\n{pagina_site}\n\n\n"
-            assunto.append("Sueddeutsche")
 
         if Manchetes_email != [] and assunto != []:
             enviar_email(Manchetes_email, assunto)
         else:
             pass
+
 
 
 if __name__ == '__main__':
