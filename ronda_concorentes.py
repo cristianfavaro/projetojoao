@@ -108,8 +108,15 @@ def pega_site_folha():
 
     for item in reportagensBrutas:
         titulo = item.find('h2', {'class':['c-main-headline__title', 'c-headline__title']}).text
-        editoria = item.find('h3', {'class':'c-headline__kicker c-kicker'}).text.strip()
-        linha_fina = item.find('p', {'class':['c-main-headline__standfirst', 'c-headline__standfirst']}).text.strip()
+        try:
+            editoria = item.find('h3', {'class':'c-headline__kicker c-kicker'}).text.strip()
+        except AttributeError:
+            editoria = 'Mercado'
+        try:
+            linha_fina = item.find('p', {'class':['c-main-headline__standfirst', 'c-headline__standfirst']}).text.strip()
+        except AttributeError:
+            linha_fina = ''
+
         link = item.find('div', {'class':['c-main-headline__content', 'c-headline__content', 'c-main-headline__wrapper']}).a['href']
 
         if editoria == 'Mercado':
