@@ -332,7 +332,9 @@ def enviar_email(mensagem_email, assunto):
 
 
 def main():
-	ronda_concorentes.main()
+
+    ronda_concorentes.main()
+
     rodar_programa = iniciar_procura()[0]
 
     if rodar_programa == True:
