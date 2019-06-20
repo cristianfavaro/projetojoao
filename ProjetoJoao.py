@@ -331,6 +331,11 @@ def enviar_email(mensagem_email, assunto):
 
 def main():
 
+	import ronda_concorentes
+
+	ronda_concorentes.main()
+
+
     rodar_programa = iniciar_procura()[0]
 
     if rodar_programa == True:
