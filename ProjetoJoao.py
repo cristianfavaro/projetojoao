@@ -8,6 +8,8 @@ import requests
 
 import os
 from dotenv import find_dotenv, load_dotenv
+import ronda_concorentes
+
 load_dotenv(find_dotenv())
 
 
@@ -330,15 +332,8 @@ def enviar_email(mensagem_email, assunto):
 
 
 def main():
-
-	import ronda_concorentes
-
 	ronda_concorentes.main()
-
-    
-
     rodar_programa = iniciar_procura()[0]
-
 
     if rodar_programa == True:
 
