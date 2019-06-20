@@ -335,8 +335,8 @@ def main():
 
 	ronda_concorentes.main()
 
-
     rodar_programa = iniciar_procura()[0]
+
 
     if rodar_programa == True:
 
