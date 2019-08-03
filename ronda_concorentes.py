@@ -282,11 +282,6 @@ def pega_site_g1():
 def main():
     Twitter_TT(1)
     Twitter_TT(23424768)
-    OGlobo()
-    pega_site_folha()
-    pega_site_g1()
-    pega_site_Valor()
-
 
 if __name__ == '__main__':
     main()
