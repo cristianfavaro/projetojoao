@@ -31,7 +31,7 @@ def Twitter_TT(id_tt):
         'location': int(trends[0]['locations'][0]['woeid']),
     }
 
-    r = requests.post('https://cristianfavaro.com.br/broadsearch/twitter/', params)
+    r = requests.post('https://broadsearch.cristianfavaro.com.br/twitter/', params)
     return r
 
 
