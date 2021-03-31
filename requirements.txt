@@ -20,7 +20,7 @@ ipython-genutils==0.2.0
 jdcal==1.3
 jupyter-client==5.1.0
 jupyter-core==4.4.0
-lxml==4.2.0
+lxml==4.6.3
 mccabe==0.6.1
 oauthlib==2.0.6
 openpyxl==2.4.9
